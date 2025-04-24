@@ -286,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               children: [
                 // Background with animated airplane
                 Container(
-                  height: 150, // Reduced from 180 to 150
+                  height: 80, // Reduced from 180 to 150
                   margin: const EdgeInsets.fromLTRB(20, 16, 20, 8), // Reduced vertical margins
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -353,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Positioned(
                   left: 40,
                   right: 40,
-                  top: 50, // Reduced from 65 to 50
+                  top: 40, // Reduced from 65 to 50
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -418,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: OptimizedCarousel(
-                height: 140, // Reduced from 220 to 140
+                height: 180, // Reduced from 220 to 140
                 items: [
                   // First Banner
                   CarouselItem(

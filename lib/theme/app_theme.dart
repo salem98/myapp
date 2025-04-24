@@ -29,9 +29,9 @@ class AppTheme {
       primary: primaryColor,
       secondary: secondaryColor,
       tertiary: accentColor,
-      background: lightBackground,
+      // Replaced deprecated 'background' with 'surface'
       surface: lightSurfaceColor,
-      onBackground: lightTextColor,
+      // Replaced deprecated 'onBackground' with 'onSurface'
       onSurface: lightTextColor,
     ),
     scaffoldBackgroundColor: lightBackground,
@@ -164,9 +164,9 @@ class AppTheme {
       primary: primaryColor,
       secondary: secondaryColor,
       tertiary: accentColor,
-      background: darkBackground,
+      // Replaced deprecated 'background' with 'surface'
       surface: darkSurfaceColor,
-      onBackground: darkTextColor,
+      // Replaced deprecated 'onBackground' with 'onSurface'
       onSurface: darkTextColor,
     ),
     scaffoldBackgroundColor: darkBackground,

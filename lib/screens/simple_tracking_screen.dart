@@ -15,7 +15,7 @@ class SimpleTrackingScreen extends StatefulWidget {
 class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
   final TextEditingController _trackingController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+
   Shipment? _shipment;
   List<Map<String, dynamic>> _statusHistory = [];
   bool _isLoading = false;
@@ -87,12 +87,12 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       // Glassmorphic AppBar
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: isDarkMode 
+        backgroundColor: isDarkMode
             ? Colors.black.withOpacity(0.7)
             : Colors.white.withOpacity(0.7),
         elevation: 0,
@@ -318,7 +318,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                 ],
               ),
             ),
-            
+
             // Popular Tracking Info
             const SizedBox(height: 24),
             const Text(
@@ -338,7 +338,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                 _buildServiceCard(Icons.directions_boat, 'Sea Freight'),
               ],
             ),
-            
+
             // Error Message
             if (_errorMessage != null && _shipment == null) ...[
               const SizedBox(height: 24),
@@ -369,7 +369,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                 ),
               ),
             ],
-            
+
             // Shipment Details
             if (_shipment != null) ...[
               const SizedBox(height: 24),
@@ -439,7 +439,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Shipment details
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -485,9 +485,9 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Delivery time
                           Row(
                             children: [
@@ -527,9 +527,9 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Package details
                           Row(
                             children: [
@@ -575,7 +575,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                   ],
                 ),
               ),
-              
+
               // Tracking History
               if (_statusHistory.isNotEmpty) ...[
                 const SizedBox(height: 24),
@@ -681,7 +681,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
       ),
     );
   }
-  
+
   Widget _buildServiceCard(IconData icon, String label) {
     return Expanded(
       child: Container(
@@ -743,7 +743,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
       final index = entry.key;
       final status = entry.value;
       final isLast = index == _statusHistory.length - 1;
-      
+
       // Determine status color based on status text
       Color statusColor;
       switch ((status['status'] ?? '').toString().toUpperCase()) {
@@ -880,7 +880,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                         ),
                       ],
                     ),
-                    if (status['notes'] != null && status['notes'].toString().isNotEmpty) ...[  
+                    if (status['notes'] != null && status['notes'].toString().isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
                         status['notes'] ?? '',

@@ -18,16 +18,16 @@ class OptimizedCarousel extends StatefulWidget {
   const OptimizedCarousel({
     super.key,
     required this.items,
-    this.height = 140, // Reduced from 180 to 140
+    this.height = 180,
     this.autoPlayInterval = const Duration(seconds: 5),
     this.showIndicator = true,
     this.indicatorActiveColor = Colors.white,
     this.indicatorInactiveColor = Colors.white54,
-    this.indicatorSize = 6.0, // Reduced from 8.0 to 6.0
-    this.indicatorSpacing = 4.0, // Reduced from 8.0 to 4.0
+    this.indicatorSize = 8.0,
+    this.indicatorSpacing = 8.0,
     this.enableAnimation = true,
     this.animationCurve = Curves.easeInOut,
-    this.borderRadius = const BorderRadius.all(Radius.circular(12)), // Reduced from 16 to 12
+    this.borderRadius = const BorderRadius.all(Radius.circular(16)),
     this.padding = EdgeInsets.zero,
   });
 
@@ -63,7 +63,7 @@ class _OptimizedCarouselState extends State<OptimizedCarousel> {
       } else {
         _currentPage = 0;
       }
-
+      
       if (_pageController.hasClients) {
         _pageController.animateToPage(
           _currentPage,
@@ -97,11 +97,11 @@ class _OptimizedCarouselState extends State<OptimizedCarousel> {
               },
             ),
           ),
-
+          
           // Custom animated dot indicators
           if (widget.showIndicator)
             Positioned(
-              bottom: 8, // Reduced from 16 to 8
+              bottom: 16,
               left: 0,
               right: 0,
               child: Row(
@@ -110,8 +110,8 @@ class _OptimizedCarouselState extends State<OptimizedCarousel> {
                   widget.items.length,
                   (index) => AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    width: _currentPage == index
-                        ? widget.indicatorSize * 2
+                    width: _currentPage == index 
+                        ? widget.indicatorSize * 2 
                         : widget.indicatorSize,
                     height: widget.indicatorSize,
                     margin: EdgeInsets.symmetric(horizontal: widget.indicatorSpacing / 2),
@@ -120,14 +120,14 @@ class _OptimizedCarouselState extends State<OptimizedCarousel> {
                       color: _currentPage == index
                           ? widget.indicatorActiveColor
                           : widget.indicatorInactiveColor,
-                      boxShadow: _currentPage == index
+                      boxShadow: _currentPage == index 
                           ? [
                               BoxShadow(
                                 color: widget.indicatorActiveColor.withOpacity(0.5),
                                 blurRadius: 4,
                                 spreadRadius: 1,
                               )
-                            ]
+                            ] 
                           : null,
                     ),
                   ),
@@ -150,7 +150,6 @@ class CarouselItem extends StatelessWidget {
   final Color buttonColor;
   final Color textColor;
   final Widget? rightSideWidget;
-  final bool compactMode; // Added compact mode option
 
   const CarouselItem({
     super.key,
@@ -163,7 +162,6 @@ class CarouselItem extends StatelessWidget {
     this.buttonColor = Colors.blue,
     this.textColor = Colors.white,
     this.rightSideWidget,
-    this.compactMode = true, // Default to compact mode
   });
 
   @override
@@ -183,7 +181,7 @@ class CarouselItem extends StatelessWidget {
             end: Alignment.centerRight,
           ),
         ),
-        padding: const EdgeInsets.all(12), // Reduced from 20 to 12
+        padding: const EdgeInsets.all(20),
         child: Stack(
           children: [
             Column(
@@ -193,45 +191,38 @@ class CarouselItem extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: compactMode ? 18 : 24, // Reduced from 24 to 18 in compact mode
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
-                  maxLines: compactMode ? 1 : 2, // Limit lines in compact mode
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4), // Reduced from 8 to 4
+                const SizedBox(height: 8),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: compactMode ? 12 : 16, // Reduced from 16 to 12 in compact mode
+                    fontSize: 16,
                     color: textColor,
                   ),
-                  maxLines: compactMode ? 1 : 2, // Limit lines in compact mode
-                  overflow: TextOverflow.ellipsis,
                 ),
                 if (buttonText != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8), // Reduced from 16 to 8
+                    padding: const EdgeInsets.only(top: 16),
                     child: ElevatedButton(
                       onPressed: onButtonPressed,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: buttonColor,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: compactMode ? 12 : 20, // Reduced in compact mode
-                          vertical: compactMode ? 8 : 12, // Reduced in compact mode
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
                         ),
-                        elevation: compactMode ? 2 : 4, // Reduced in compact mode
+                        elevation: 4,
                         shadowColor: buttonColor.withOpacity(0.3),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(compactMode ? 8 : 12), // Reduced in compact mode
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
-                        buttonText!,
-                        style: TextStyle(fontSize: compactMode ? 12 : 14), // Smaller text in compact mode
-                      ),
+                      child: Text(buttonText!),
                     ),
                   ),
               ],

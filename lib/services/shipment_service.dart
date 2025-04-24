@@ -12,7 +12,7 @@ class ShipmentService {
             from_address:addresses!from_address_id(*),
             to_address:addresses!to_address_id(*)
         ''').order('created_at', ascending: false);
-        
+
         final List<Shipment> shipments = [];
         for (final item in response) {
             shipments.add(Shipment(

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:myapp/models.dart';
 
@@ -24,7 +25,7 @@ class TrackingService {
       }
 
       final item = response[0];
-      
+
       return Shipment(
         id: item['id'],
         trackingNumber: item['tracking_number'],
@@ -57,7 +58,9 @@ class TrackingService {
         quantity: item['quantity'],
       );
     } catch (e) {
-      print('Error fetching shipment by tracking number: $e');
+      // Use a logger instead of print in production
+      // Logger.error('Error fetching shipment by tracking number: $e');
+      debugPrint('Error fetching shipment by tracking number: $e');
       return null;
     }
   }
@@ -72,7 +75,9 @@ class TrackingService {
 
       return response;
     } catch (e) {
-      print('Error fetching shipment status history: $e');
+      // Use a logger instead of print in production
+      // Logger.error('Error fetching shipment status history: $e');
+      debugPrint('Error fetching shipment status history: $e');
       return [];
     }
   }

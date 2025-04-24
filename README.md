@@ -1,6 +1,6 @@
-# myapp 1
+# TNS Express App
 
-A new Flutter project.
+TNS Express - Shipment Tracking Application
 
 ## Getting Started
 
