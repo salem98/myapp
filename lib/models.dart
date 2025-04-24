@@ -24,6 +24,20 @@ class Address {
     required this.isDefault,
   });
 
+  Address.fromMap(Map<String, dynamic> map)
+      : id = map['id'] ?? '',
+        name = map['name'] ?? '',
+        streetOne = map['street1'] ?? '',
+        streetTwo = map['street2'],
+        city = map['city'] ?? '',
+        state = map['state'] ?? '',
+        postalCode = map['postal_code'] ?? '',
+        country = map['country'] ?? '',
+        addressType = map['address_type'] ?? '',
+        isDefault = map['is_default'] ?? false;
+
+
+
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(
       id: json['id'],
@@ -135,7 +149,7 @@ class Shipment {
       labelUrl: json['label_url'],
       createdAt: DateTime.parse(json['created_at']),
       estimatedDelivery: json['estimated_delivery'] != null
-          ? DateTime.parse(json['estimated_delivery'])
+          ? DateTime.tryParse(json['estimated_delivery'])
           : null,
       actualDelivery: json['actual_delivery'] != null ? DateTime.parse(json['actual_delivery']): null,
       deliveryInstructions: json['delivery_instructions'],
@@ -145,7 +159,7 @@ class Shipment {
       tags: json['tags'] != null ? List<String>.from(json['tags']) : null,
       notes: json['notes'],
         fromAddress: json['from_address'] != null ? Address.fromJson(json['from_address']) : null,
-        toAddress: json['to_address'] != null ? Address.fromJson(json['to_address']) : null,
+      toAddress: json['to_address'] != null ? Address.fromJson(json['to_address']) : null,
         origin: json['origin'],
         destination: json['destination'],
         quantity: json['quantity']

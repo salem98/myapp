@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:myapp/services/shipment_service.dart';
 import 'models.dart';
 import 'services/shipment_service.dart';
 
@@ -11,6 +12,8 @@ Future<void> main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kaWxsdm1lZ3dqenF3bXVsaHZjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0Mzk5NTk5NywiZXhwIjoyMDU5NTcxOTk3fQ.tf8OHPZmE2wLF4HsD_yS1-J_oIxG_TasqpQ49FBqLzc',
   );
+    final supabaseClient = Supabase.instance.client;
+
   runApp(const MyApp());
 }
 
@@ -36,15 +39,15 @@ class ShipmentListScreen extends StatefulWidget {
 }
 
 class _ShipmentListScreenState extends State<ShipmentListScreen> {
-  final ShipmentService shipmentService = ShipmentService();
   late Future<List<Shipment>> _shipmentsFuture;
+    final supabaseClient = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    _shipmentsFuture = shipmentService.getShipments();
+        final shipmentService = ShipmentService(supabaseClient);
+    _shipmentsFuture = shipmentService.fetchShipments();
   }
-
   String formatDate(DateTime? date) {
     if (date == null) return 'N/A';
     try {
