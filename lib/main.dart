@@ -5,6 +5,7 @@ import 'package:myapp/services/shipment_service.dart';
 import 'models.dart';
 import 'services/shipment_service.dart';
 
+// test note
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
