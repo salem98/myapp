@@ -57,10 +57,12 @@ class TrackingService {
         destination: item['destination'],
         quantity: item['quantity'],
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Use a logger instead of print in production
       // Logger.error('Error fetching shipment by tracking number: $e');
       debugPrint('Error fetching shipment by tracking number: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('Tracking number used: $trackingNumber');
       return null;
     }
   }
@@ -74,10 +76,12 @@ class TrackingService {
           .order('created_at', ascending: false);
 
       return response;
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Use a logger instead of print in production
       // Logger.error('Error fetching shipment status history: $e');
       debugPrint('Error fetching shipment status history: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('Shipment ID used: $shipmentId');
       return [];
     }
   }
