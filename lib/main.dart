@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
 
 // test note 123
 Future<void> main() async {
@@ -23,10 +24,9 @@ class TNSApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TNS Express',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system, // Respect system theme settings
       home: const HomeScreen(),
     );
   }

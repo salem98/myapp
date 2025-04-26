@@ -3,6 +3,8 @@ import 'package:myapp/screens/tracking_screen.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:myapp/widgets/optimized_carousel.dart';
 import 'package:myapp/widgets/marquee_widget.dart';
+import 'package:myapp/widgets/quick_actions_section.dart';
+import 'package:myapp/widgets/logistics_bottom_navigation_bar.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -258,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0, // No elevation when scrolled under
         title: Padding(
           padding: const EdgeInsets.only(right: 16.0),
           child: Image.asset(
@@ -267,13 +270,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            onPressed: () {},
+          // QR Code Scanner button with tooltip
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.qr_code_scanner),
+              onPressed: () {},
+              tooltip: 'Scan QR Code',
+              style: IconButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {},
+          // Settings button with tooltip
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {},
+              tooltip: 'Settings',
+              style: IconButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -281,138 +308,146 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Modern Tracking Bar with Airplane Animation
-            Stack(
-              children: [
-                // Background with animated airplane
-                Container(
-                  height: 80, // Reduced from 180 to 150
-                  margin: const EdgeInsets.fromLTRB(20, 16, 20, 8), // Reduced vertical margins
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      children: [
-                        // Background gradient
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFF0F4FF),
-                                Colors.white,
+            // Modern Tracking Section
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isSmallScreen = constraints.maxWidth < 400;
+
+                  return Column(
+                    children: [
+                      // Simple News ticker
+                      Container(
+                        height: 28,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.campaign_rounded,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: MarqueeWidget(
+                                text: "Đây là thông báo thử nghiệm - Chúng tôi đang nâng cấp hệ thống - Xin cảm ơn quý khách",
+                                textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: isSmallScreen ? 11 : 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Clean Minimal Tracking Bar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: TextField(
+                          controller: _trackingNumberController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter tracking number',
+                            hintStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                              fontSize: 14,
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                                width: 1.5,
+                              ),
+                            ),
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // QR Code button
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.qr_code_scanner,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Scan QR Code'),
+                                        duration: Duration(seconds: 1),
+                                      ),
+                                    );
+                                  },
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+
+                                // Track button
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: InkWell(
+                                    onTap: _trackPackage,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Track',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ),
-                        // Animated airplane with continuous loop
-                        AnimatedAirplane(),
-                        // Animated package with continuous bounce
-                        AnimatedPackage(),
-                        // Dotted path for airplane
-                        Positioned(
-                          top: 15, // Reduced from 20 to 15
-                          left: 0,
-                          right: 0,
-                          child: CustomPaint(
-                            size: const Size(double.infinity, 50), // Reduced from 60 to 50
-                            painter: DashedLinePainter(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // News ticker - running text from right to left
-                Positioned(
-                  left: 20,
-                  right: 20,
-                  top: 10, // Reduced from 15 to 10
-                  child: Container(
-                    height: 24, // Reduced from 30 to 24
-                    decoration: BoxDecoration(
-                      color: Color(0xFF1E3A8A).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12), // Reduced from 15 to 12
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12), // Reduced from 15 to 12
-                      child: MarqueeWidget(
-                        text: "Đây là thông báo thử nghiệm - Chúng tôi đang nâng cấp hệ thống - Xin cảm ơn quý khách đã sử dụng dịch vụ",
-                        textStyle: TextStyle(
-                          color: Color(0xFF1E3A8A),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12, // Reduced from 13 to 12
+                          onSubmitted: (value) {
+                            _trackPackage();
+                          },
                         ),
                       ),
-                    ),
-                  ),
-                ),
 
-                // Tracking input field
-                Positioned(
-                  left: 40,
-                  right: 40,
-                  top: 40, // Reduced from 65 to 50
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10, // Reduced from 15 to 10
-                          offset: const Offset(0, 3), // Reduced from 5 to 3
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _trackingNumberController,
-                            decoration: InputDecoration(
-                              hintText: 'Enter tracking number',
-                              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // Reduced from 16 to 12
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Color(0xFF1E3A8A).withOpacity(0.7),
-                                size: 20,
-                              ),
-                            ),
-                            onSubmitted: (value) {
-                              _trackPackage();
-                            },
-                          ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(right: 6), // Reduced from 8 to 6
-                          decoration: BoxDecoration(
-                            color: Color(0xFF1E3A8A),
-                            borderRadius: BorderRadius.circular(6), // Reduced from 8 to 6
-                          ),
-                          child: IconButton(
-                            onPressed: _trackPackage,
-                            icon: const Icon(Icons.arrow_forward, color: Colors.white, size: 18), // Reduced from 20 to 18
-                            tooltip: 'Track package',
-                            padding: EdgeInsets.all(8), // Add smaller padding
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+
+                    ],
+                  );
+                },
+              ),
             ),
 
-            // Divider
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-              child: Divider(color: Colors.grey.shade200, height: 20),
-            ),
+            // Spacer
+            const SizedBox(height: 8),
 
             // Optimized Banner Carousel
             Padding(
@@ -483,197 +518,292 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
 
-            // Services Section
+            // Material 3 Services Section
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Determine if we're on a small screen
+                  final isSmallScreen = constraints.maxWidth < 400;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Service Types',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Service Types',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: isSmallScreen ? 18 : 22,
+                            ),
+                          ),
+                          // Material 3 styled chip
+                          ActionChip(
+                            avatar: Icon(
                               Icons.info_outline,
                               size: 16,
-                              color: Colors.blue.shade700,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
+                            label: Text(
                               'Compare',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.blue.shade700,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            onPressed: () {},
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Service Type Cards with Material 3 styling
+                      SizedBox(
+                        height: 120,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: _selectedShippingOption == 0
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                                    width: _selectedShippingOption == 0 ? 2 : 1,
+                                  ),
+                                ),
+                                color: _selectedShippingOption == 0
+                                    ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2)
+                                    : Theme.of(context).colorScheme.surface,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedShippingOption = 0;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.primaryContainer,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            Icons.flight_takeoff,
+                                            color: Theme.of(context).colorScheme.primary,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                isSmallScreen ? 'AIR' : 'Singapore, Malaysia, Dubai',
+                                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: isSmallScreen ? 14 : 16,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Express shipping to Southeast Asia & Middle East',
+                                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                  fontSize: isSmallScreen ? 11 : 12,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: _selectedShippingOption == 1
+                                        ? Theme.of(context).colorScheme.secondary
+                                        : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                                    width: _selectedShippingOption == 1 ? 2 : 1,
+                                  ),
+                                ),
+                                color: _selectedShippingOption == 1
+                                    ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2)
+                                    : Theme.of(context).colorScheme.surface,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedShippingOption = 1;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.secondaryContainer,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            Icons.public,
+                                            color: Theme.of(context).colorScheme.secondary,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                'International',
+                                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: isSmallScreen ? 14 : 16,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Shipping to over 200+ countries worldwide',
+                                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                  fontSize: isSmallScreen ? 11 : 12,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Service Type Cards with consistent sizing
-                  SizedBox(
-                    height: 120, // Reduced from 140 to 120
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildShippingOptionCard(
-                            title: 'Singapore, Malaysia, Dubai',
-                            subtitle: 'Express shipping to Southeast Asia & Middle East',
-                            icon: Icons.flight_takeoff,
-                            accentColor: Colors.green,
-                            isSelected: _selectedShippingOption == 0,
-                            onTap: () {
-                              setState(() {
-                                _selectedShippingOption = 0;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildShippingOptionCard(
-                            title: 'International',
-                            subtitle: 'Shipping to over 200+ countries worldwide',
-                            icon: Icons.public,
-                            accentColor: Colors.blue,
-                            isSelected: _selectedShippingOption == 1,
-                            onTap: () {
-                              setState(() {
-                                _selectedShippingOption = 1;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
 
-            // Quick Actions
+            // Modern Quick Actions Section
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: QuickActionsSection(),
+            ),
+
+            // Material 3 Bottom Banner
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Quick Actions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    childAspectRatio: 3.0, // Increased from 2.5 to 3.0 for more compact cards
-                    mainAxisSpacing: 8, // Reduced from 12 to 8
-                    crossAxisSpacing: 8, // Reduced from 12 to 8
-                    children: [
-                      _buildQuickAction(Icons.language, 'International Routes', tag: 'Best Value'),
-                      _buildQuickAction(Icons.search, 'Track Package', onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TrackingScreen(),
-                          ),
-                        );
-                      }),
-                      _buildQuickAction(Icons.access_time, 'Delivery Time'),
-                      _buildQuickAction(Icons.rule, 'Shipping Standards'),
-                      _buildQuickAction(Icons.map, 'Coverage Area'),
-                      _buildQuickAction(Icons.straighten, 'Measurement Rules'),
-                      _buildQuickAction(Icons.info_outline, 'Product Info'),
-                      _buildQuickAction(Icons.business, 'Enterprise Registration', tag: 'New'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Determine if we're on a small screen
+                  final isSmallScreen = constraints.maxWidth < 400;
 
-            // Bottom Banner
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced vertical margin
-              padding: const EdgeInsets.all(12), // Reduced from 16 to 12
-              decoration: BoxDecoration(
-                color: Colors.orange.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.shade300),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.support_agent,
-                    color: Colors.orange.shade800,
-                    size: 28, // Reduced from 32 to 28
-                  ),
-                  const SizedBox(width: 12), // Reduced from 16 to 12
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Order Assistant',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange.shade800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Need help with your order? Our customer service is here to help',
-                          style: TextStyle(
-                            color: Colors.orange.shade800,
-                          ),
-                        ),
-                      ],
+                  return Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ),
-                ],
+                    color: Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.7),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.tertiary.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.support_agent,
+                              color: Theme.of(context).colorScheme.tertiary,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Order Assistant',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.onTertiaryContainer,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isSmallScreen
+                                      ? 'Need help with your order? Contact us'
+                                      : 'Need help with your order? Our customer service is here to help',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onTertiaryContainer,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward_ios, size: 16),
+                            onPressed: () {},
+                            color: Theme.of(context).colorScheme.onTertiaryContainer,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      // Custom Logistics Bottom Navigation Bar with FAB
+      bottomNavigationBar: LogisticsBottomNavigationBar(
         currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Track',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'My Account',
-          ),
-        ],
         onTap: (index) {
-          if (index == 1) {
+          if (index == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -686,76 +816,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildQuickAction(IconData icon, String label, {String? tag, VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              alignment: Alignment.topRight,
-              children: [
-                Icon(
-                  icon,
-                  size: 24, // Reduced from 28 to 24
-                  color: Colors.blue.shade700,
-                ),
-                if (tag != null)
-                  Positioned(
-                    right: -3, // Reduced from -5 to -3
-                    top: -3, // Reduced from -5 to -3
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1), // Reduced padding
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(6), // Reduced from 8 to 6
-                      ),
-                      child: Text(
-                        tag,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6), // Reduced from 8 to 6
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  // Method to handle package tracking
+
+  // Method to handle package tracking with Material 3 styling
   void _trackPackage() {
     final trackingNumber = _trackingNumberController.text.trim();
     if (trackingNumber.isEmpty) {
-      // Show a snackbar if no tracking number is entered
+      // Show a Material 3 styled snackbar if no tracking number is entered
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please enter a tracking number'),
-          backgroundColor: Color(0xFF1E3A8A),
+          content: const Text('Please enter a tracking number'),
+          backgroundColor: Theme.of(context).colorScheme.errorContainer,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: EdgeInsets.all(16),
-          duration: Duration(seconds: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 2),
+          showCloseIcon: true,
+          closeIconColor: Theme.of(context).colorScheme.onErrorContainer,
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Theme.of(context).colorScheme.primary,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
         ),
       );
       return;
@@ -774,161 +858,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   // Removed _buildBannerItem method as we're now using the optimized carousel
 
-  Widget _buildShippingOptionCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color accentColor,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    // Use shorter text for specific titles to ensure they fit on mobile
-    String displayTitle = title;
-    String displaySubtitle = subtitle;
 
-    // Only modify the Singapore text which is too long
-    if (title == 'Singapore, Malaysia, Dubai') {
-      displayTitle = 'AIR';
-      displaySubtitle = 'Express shipping to Singapore, Malaysia & Dubai';
-    }
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16), // Reduced from 24 to 16
-      child: Container(
-        height: 120, // Reduced from 140 to 120
-        padding: const EdgeInsets.all(12), // Reduced from 16 to 12
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16), // Reduced from 24 to 16
-          border: Border.all(
-            color: isSelected ? accentColor : Colors.transparent,
-            width: isSelected ? 2 : 0,
-          ),
-          boxShadow: [
-            // Outer shadow (darker on bottom-right)
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              blurRadius: 8, // Reduced from 10 to 8
-              offset: const Offset(5, 5),
-              spreadRadius: 1,
-            ),
-            // Inner shadow (lighter on top-left) - neumorphic effect
-            BoxShadow(
-              color: Colors.white,
-              blurRadius: 8, // Reduced from 10 to 8
-              offset: const Offset(-3, -3),
-              spreadRadius: 1,
-            ),
-          ],
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              accentColor.withOpacity(0.05),
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Background decorative circle
-            Positioned(
-              right: -10, // Reduced from -15 to -10
-              top: -10, // Reduced from -15 to -10
-              child: Container(
-                width: 50, // Reduced from 70 to 50
-                height: 50, // Reduced from 70 to 50
-                decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            // Content
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Icon with glass effect
-                Container(
-                  width: 40, // Reduced from 50 to 40
-                  height: 40, // Reduced from 50 to 40
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12), // Reduced from 16 to 12
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentColor.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: accentColor.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: accentColor,
-                    size: 20, // Reduced from 24 to 20
-                  ),
-                ),
-                const SizedBox(width: 8), // Reduced from 12 to 8
-                // Text content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        displayTitle,
-                        style: TextStyle(
-                          fontSize: 14, // Reduced from 15 to 14
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? accentColor : Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2), // Reduced from 4 to 2
-                      Text(
-                        displaySubtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                          height: 1.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            // Selection indicator
-            if (isSelected)
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 20, // Reduced from 24 to 20
-                  height: 20, // Reduced from 24 to 20
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 14, // Reduced from 16 to 14
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }
