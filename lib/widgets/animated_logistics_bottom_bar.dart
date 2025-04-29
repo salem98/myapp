@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:myapp/screens/shipment_creation_screen.dart';
 
 class AnimatedLogisticsBottomBar extends StatefulWidget {
   final int currentIndex;
@@ -132,15 +133,13 @@ class _AnimatedLogisticsBottomBarState extends State<AnimatedLogisticsBottomBar>
                 theme.colorScheme.primary,
                 () {
                   Navigator.pop(context);
-                  widget.onCreatePressed();
-                  // Show a snackbar to indicate the action
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Creating Air Shipment'),
-                      duration: const Duration(seconds: 1),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      margin: const EdgeInsets.all(16),
+                  // Navigate to shipment creation screen with Air shipment type
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ShipmentCreationScreen(
+                        initialShipmentType: ShipmentType.air,
+                      ),
                     ),
                   );
                 },
@@ -155,15 +154,13 @@ class _AnimatedLogisticsBottomBarState extends State<AnimatedLogisticsBottomBar>
                 theme.colorScheme.secondary,
                 () {
                   Navigator.pop(context);
-                  widget.onCreatePressed();
-                  // Show a snackbar to indicate the action
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Creating Sea Shipment'),
-                      duration: const Duration(seconds: 1),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      margin: const EdgeInsets.all(16),
+                  // Navigate to shipment creation screen with Sea shipment type
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ShipmentCreationScreen(
+                        initialShipmentType: ShipmentType.sea,
+                      ),
                     ),
                   );
                 },

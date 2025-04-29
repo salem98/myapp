@@ -97,6 +97,7 @@ class Shipment {
   final dynamic origin;
   final dynamic destination;
   final int? quantity;
+  final String? receiverName;
 
   Shipment({
     required this.id,
@@ -127,7 +128,8 @@ class Shipment {
     this.toAddress,
     this.destination,
     this.origin,
-    this.quantity
+    this.quantity,
+    this.receiverName
   });
 
   factory Shipment.fromJson(Map<String, dynamic> json) {
@@ -158,11 +160,12 @@ class Shipment {
       priority: json['priority'],
       tags: json['tags'] != null ? List<String>.from(json['tags']) : null,
       notes: json['notes'],
-        fromAddress: json['from_address'] != null ? Address.fromJson(json['from_address']) : null,
+      fromAddress: json['from_address'] != null ? Address.fromJson(json['from_address']) : null,
       toAddress: json['to_address'] != null ? Address.fromJson(json['to_address']) : null,
-        origin: json['origin'],
-        destination: json['destination'],
-        quantity: json['quantity']
+      origin: json['origin'],
+      destination: json['destination'],
+      quantity: json['quantity'],
+      receiverName: json['receiver_name']
     );
   }
 }

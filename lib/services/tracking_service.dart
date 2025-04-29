@@ -17,7 +17,7 @@ class TrackingService {
             from_address:addresses!from_address_id(*),
             to_address:addresses!to_address_id(*)
           ''')
-          .or('tracking_number.eq.$trackingNumber,courier_tracking_number.eq.$trackingNumber')
+          .or('tracking_number.ilike.$trackingNumber,courier_tracking_number.ilike.$trackingNumber')
           .limit(1);
 
       if (response.isEmpty) {
@@ -56,6 +56,7 @@ class TrackingService {
         origin: item['origin'],
         destination: item['destination'],
         quantity: item['quantity'],
+        receiverName: item['receiver_name'],
       );
     } catch (e, stackTrace) {
       // Use a logger instead of print in production

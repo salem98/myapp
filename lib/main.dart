@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/main_navigation_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'theme/app_theme.dart';
 
 // test note 123
@@ -27,7 +28,7 @@ class TNSApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system, // Respect system theme settings
-      home: MainNavigationScreen(key: MainNavigationScreen.globalKey),
+      home: const OnboardingScreen(),
     );
   }
 }

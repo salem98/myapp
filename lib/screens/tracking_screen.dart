@@ -440,6 +440,14 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
                 const SizedBox(height: 4),
                 Row(
                   children: [
+                    Icon(Icons.person_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Receiver: ${_shipment!.receiverName ?? _shipment!.toAddress?.name ?? 'N/A'}'),
+                  ],
+                ),                
+                const SizedBox(height: 4),
+                Row(
+                  children: [
                     Icon(Icons.local_post_office_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text('Service: ${_shipment!.service ?? 'N/A'}'),
