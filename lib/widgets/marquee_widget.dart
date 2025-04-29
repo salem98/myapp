@@ -70,13 +70,6 @@ class _MarqueeWidgetState extends State<MarqueeWidget> {
         scrollDirection: widget.direction,
         child: Row(
           children: [
-            // Add an icon at the beginning
-            Icon(
-              Icons.campaign,
-              color: Color(0xFF1E3A8A),
-              size: 16,
-            ),
-            SizedBox(width: 8),
             // The main text
             Text(
               widget.text,

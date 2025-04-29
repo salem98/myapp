@@ -13,7 +13,7 @@ class TrackingScreen extends StatefulWidget {
   State<TrackingScreen> createState() => _TrackingScreenState();
 }
 
-class _TrackingScreenState extends State<TrackingScreen> {
+class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _trackingController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -21,7 +21,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
   List<Map<String, dynamic>> _statusHistory = [];
   bool _isLoading = false;
   String? _errorMessage;
-
+  
+  // Animation controller for the tracking form
+  late AnimationController _animationController;
+  late Animation<double> _formOpacityAnimation;
+  
   late final TrackingService _trackingService;
 
   @override
@@ -29,6 +33,19 @@ class _TrackingScreenState extends State<TrackingScreen> {
     super.initState();
     final supabaseClient = Supabase.instance.client;
     _trackingService = TrackingService(supabaseClient);
+    
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    
+    _formOpacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
     // If a tracking number was provided, set it in the controller and track it
     if (widget.trackingNumber != null && widget.trackingNumber!.isNotEmpty) {
@@ -45,6 +62,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   @override
   void dispose() {
     _trackingController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -57,8 +75,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _shipment = null;
-      _statusHistory = [];
     });
 
     try {
@@ -80,12 +96,28 @@ class _TrackingScreenState extends State<TrackingScreen> {
         _statusHistory = statusHistory;
         _isLoading = false;
       });
+      
+      // Animate the form out when shipment is found
+      _animationController.forward();
     } catch (e) {
       setState(() {
         _errorMessage = 'An error occurred while tracking the shipment. Please try again.';
         _isLoading = false;
       });
     }
+  }
+  
+  // Reset the tracking form and show it again
+  void _resetTracking() {
+    setState(() {
+      _shipment = null;
+      _statusHistory = [];
+      _errorMessage = null;
+      _trackingController.clear();
+    });
+    
+    // Animate the form back in
+    _animationController.reverse();
   }
 
   String formatDate(DateTime? date) {
@@ -99,793 +131,413 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
-            Image.network(
-              'https://placehold.co/40x40?text=ZTO',
-              width: 32,
-              height: 32,
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.local_shipping_rounded,
+                size: 24,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             const Text('Shipment Tracking'),
           ],
         ),
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
+            icon: const Icon(Icons.qr_code_scanner_rounded),
             onPressed: () {},
             tooltip: 'Scan QR Code',
+            style: IconButton.styleFrom(
+              foregroundColor: theme.colorScheme.primary,
+              backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
+      // Add a floating action button that appears when shipment details are shown
+      floatingActionButton: _shipment != null 
+        ? FloatingActionButton.extended(
+            onPressed: _resetTracking,
+            icon: const Icon(Icons.search),
+            label: const Text('Track Another'),
+            tooltip: 'Track another shipment',
+          )
+        : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Tracking Hero Section
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade700, Colors.blue.shade500],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
+            // Tracking Form Section - Animated to hide/show
+            FadeTransition(
+              opacity: _formOpacityAnimation,
+              child: AnimatedSizeAndFade(
+                show: _shipment == null,
+                child: _buildTrackingForm(theme),
               ),
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
+            ),
+            
+            // Shipment Details Section - Shows when a shipment is found
+            if (_shipment != null)
+              _buildShipmentDetails(theme),
+              
+            const SizedBox(height: 16),
+            
+            // Error Message Section
+            if (_errorMessage != null) 
+              Card(
+                elevation: 0,
+                color: theme.colorScheme.errorContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
                     children: [
-                      Icon(Icons.local_shipping, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Package Tracking',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      Icon(
+                        Icons.error_outline_rounded,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Enter your tracking number to get real-time updates',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // Widget for the tracking form
+  Widget _buildTrackingForm(ThemeData theme) {
+    return Card(
+      key: const ValueKey('tracking_input'),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      color: theme.colorScheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.local_shipping_rounded,
+                  color: theme.colorScheme.onPrimary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Package Tracking',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Enter your tracking number to get real-time updates',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onPrimary.withOpacity(0.9),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Card(
+                    elevation: 0,
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextFormField(
+                      controller: _trackingController,
+                      decoration: InputDecoration(
+                        hintText: 'e.g., TNS123456',
+                        hintStyle: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: theme.colorScheme.primary,
+                        ),
+                        suffixIcon: Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.qr_code_scanner_rounded,
+                              size: 20,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                            onPressed: () {},
+                            tooltip: 'Scan QR Code',
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a tracking number';
+                        }
+                        return null;
+                      },
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: TextFormField(
-                            controller: _trackingController,
-                            decoration: InputDecoration(
-                              hintText: 'e.g., TNS123456',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              prefixIcon: const Icon(Icons.search),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.qr_code_scanner),
-                                onPressed: () {},
-                                tooltip: 'Scan QR Code',
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a tracking number';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _trackShipment,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.blue.shade700,
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.blue.shade700,
-                                  ),
-                                )
-                              : const Text(
-                                  'TRACK PACKAGE',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                        ),
-                      ],
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: _isLoading ? null : _trackShipment,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: theme.colorScheme.onPrimary,
+                      foregroundColor: theme.colorScheme.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
+                    child: _isLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        : Text(
+                            'TRACK PACKAGE',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ],
               ),
             ),
-
-            // Popular Tracking Info
-            const SizedBox(height: 24),
-            const Text(
-              'Popular Tracking Services',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _buildServiceCard(Icons.local_shipping, 'Express'),
-                const SizedBox(width: 12),
-                _buildServiceCard(Icons.flight_takeoff, 'Air Freight'),
-                const SizedBox(width: 12),
-                _buildServiceCard(Icons.directions_boat, 'Sea Freight'),
-              ],
-            ),
-            const SizedBox(height: 24),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  border: Border.all(color: Colors.red.shade200),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.red.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade700),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(color: Colors.red.shade700),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (_shipment != null) ...[
-              const SizedBox(height: 24),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with tracking number and status
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Tracking #${_shipment!.trackingNumber}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Created on ${formatDate(_shipment!.createdAt)}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _buildStatusChip(_shipment!.status),
-                        ],
-                      ),
-                    ),
-
-                    // Shipment details
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Carrier and service info
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.local_shipping,
-                                  color: Colors.blue.shade700,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Carrier & Service',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${_shipment!.carrier ?? 'ZTO Express'} - ${_shipment!.service ?? 'Standard'}',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Delivery time
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade50,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.calendar_today,
-                                  color: Colors.green.shade700,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Estimated Delivery',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatDate(_shipment!.estimatedDelivery),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Package details
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade50,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.inventory_2,
-                                  color: Colors.orange.shade700,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Package Details',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${_shipment!.weight ?? 'N/A'} kgs, ${_shipment!.packageType ?? 'Standard'}, Total: ${_shipment!.quantity ?? 1} boxes',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const Divider(height: 32),
-
-                          // Addresses section
-                          const Text(
-                            'Shipping Route',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // From address
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade100,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.circle,
-                                      color: Colors.blue,
-                                      size: 12,
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 2,
-                                    height: 40,
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'From',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      _shipment!.origin?.toString() ??
-                                          _formatAddress(_shipment!.fromAddress),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          // To address
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade100,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.location_on,
-                                  color: Colors.red,
-                                  size: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'To',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      _shipment!.destination?.toString() ??
-                                          _formatAddress(_shipment!.toAddress),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          if (_shipment!.deliveryInstructions != null) ...[
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.amber.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: Colors.amber.shade800,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Delivery Instructions',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.amber.shade800,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _shipment!.deliveryInstructions!,
-                                          style: TextStyle(
-                                            color: Colors.amber.shade900,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_statusHistory.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Container(
-                  margin: const EdgeInsets.only(top: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.history,
-                              color: Colors.blue.shade700,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Tracking History',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Timeline content
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: _buildStatusTimeline(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
           ],
         ),
       ),
     );
   }
-
-  Widget _buildStatusChip(String status) {
-    Color color;
-    switch (status.toUpperCase()) {
-      case 'DELIVERED':
-        color = Colors.green;
-        break;
-      case 'IN_TRANSIT':
-        color = Colors.blue;
-        break;
-      case 'PENDING':
-      case 'CREATED':
-        color = Colors.orange;
-        break;
-      case 'EXCEPTION':
-        color = Colors.red;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceCard(IconData icon, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: Colors.blue.shade700,
-              size: 24,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
+  
+  // Widget for the shipment details
+  Widget _buildShipmentDetails(ThemeData theme) {
+    return Column(
+      key: const ValueKey('shipment_details'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatAddress(Address? address) {
-    if (address == null) return 'N/A';
-    return '${address.name}, ${address.city}, ${address.state}, ${address.postalCode}';
-  }
-
-  List<Widget> _buildStatusTimeline() {
-    if (_statusHistory.isEmpty) {
-      return [
-        const Center(
           child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('No tracking history available'),
-          ),
-        ),
-      ];
-    }
-
-    return _statusHistory.asMap().entries.map((entry) {
-      final index = entry.key;
-      final status = entry.value;
-      final isLast = index == _statusHistory.length - 1;
-
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              if (!isLast)
-                Container(
-                  width: 2,
-                  height: 50,
-                  color: Colors.blue.shade200,
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tracking #${_shipment!.trackingNumber}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    // Add a small button to track another shipment
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _resetTracking,
+                      tooltip: 'Track another shipment',
+                      style: IconButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primaryContainer,
+                        foregroundColor: theme.colorScheme.onPrimaryContainer,
+                        padding: const EdgeInsets.all(8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Status chip with color based on status
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(theme, _shipment!.status),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    _shipment!.status,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  status['status'] ?? 'Status Update',
-                  style: const TextStyle(
+                  'Shipment Details',
+                  style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  status['location'] ?? 'Unknown Location',
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.local_shipping_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Carrier: ${_shipment!.carrier ?? 'N/A'}'),
+                  ],
                 ),
                 const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.local_post_office_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Service: ${_shipment!.service ?? 'N/A'}'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Est. Delivery: ${formatDate(_shipment!.estimatedDelivery)}'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.inventory_2_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Package: ${_shipment!.weight ?? 'N/A'} kgs, ${_shipment!.quantity ?? 0} boxes'),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  status['notes'] ?? '',
-                  style: const TextStyle(
-                    color: Colors.grey,
+                  'Status History',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  _formatTimelineDate(status['created_at']),
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-                if (!isLast) const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                if (_statusHistory.isEmpty)
+                  Text(
+                    'No status updates available',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
+                  )
+                else
+                  ..._statusHistory.map((status) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2.0),
+                      child: Text(
+                        '${status['date']}: ${status['status']}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    );
+                  }).toList(),
               ],
             ),
           ),
-        ],
-      );
-    }).toList();
+        ),
+      ],
+    );
   }
-
-  String _formatTimelineDate(String? dateStr) {
-    if (dateStr == null) return '';
-    try {
-      final date = DateTime.parse(dateStr);
-      return DateFormat('MMM d, yyyy - h:mm a').format(date);
-    } catch (_) {
-      return dateStr;
+  
+  // Helper method to get color based on shipment status
+  Color _getStatusColor(ThemeData theme, String status) {
+    final statusLower = status.toLowerCase();
+    if (statusLower.contains('delivered')) {
+      return Colors.green;
+    } else if (statusLower.contains('transit')) {
+      return theme.colorScheme.primary;
+    } else if (statusLower.contains('pending') || statusLower.contains('processing')) {
+      return Colors.orange;
+    } else if (statusLower.contains('exception') || statusLower.contains('failed')) {
+      return theme.colorScheme.error;
     }
+    return theme.colorScheme.secondary;
+  }
+}
+
+// Custom widget for animated size and fade transitions
+class AnimatedSizeAndFade extends StatelessWidget {
+  final Widget child;
+  final bool show;
+  final Duration duration;
+
+  const AnimatedSizeAndFade({
+    super.key,
+    required this.child,
+    required this.show,
+    this.duration = const Duration(milliseconds: 300),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: duration,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SizeTransition(
+            sizeFactor: animation,
+            axisAlignment: -1.0,
+            child: child,
+          ),
+        );
+      },
+      child: show ? child : const SizedBox.shrink(),
+    );
   }
 }

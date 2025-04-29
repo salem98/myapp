@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/screens/tracking_screen.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:myapp/widgets/optimized_carousel.dart';
+import 'package:myapp/screens/main_navigation_screen.dart';
 import 'package:myapp/widgets/marquee_widget.dart';
+import 'package:myapp/widgets/animated_logistics_bottom_bar.dart';
+import 'package:myapp/widgets/optimized_carousel.dart';
 import 'package:myapp/widgets/quick_actions_section.dart';
-import 'package:myapp/widgets/logistics_bottom_navigation_bar.dart';
 import 'dart:async';
-import 'dart:math' as math;
 
 // Custom painter for drawing dashed line
 class DashedLinePainter extends CustomPainter {
@@ -191,7 +190,12 @@ class _AnimatedPackageState extends State<AnimatedPackage> with SingleTickerProv
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool hideBottomBar;
+
+  const HomeScreen({
+    super.key,
+    this.hideBottomBar = false,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -211,6 +215,48 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   // Text controller for tracking number input
   final TextEditingController _trackingNumberController = TextEditingController();
+
+  // Method to handle package tracking with Material 3 styling
+  void _trackPackage() {
+    final trackingNumber = _trackingNumberController.text.trim();
+    if (trackingNumber.isEmpty) {
+      // Show a Material 3 styled snackbar if no tracking number is entered
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please enter a tracking number'),
+          backgroundColor: Theme.of(context).colorScheme.errorContainer,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 2),
+          showCloseIcon: true,
+          closeIconColor: Theme.of(context).colorScheme.onErrorContainer,
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Theme.of(context).colorScheme.primary,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
+        ),
+      );
+      return;
+    }
+
+    // If we're inside the MainNavigationScreen, use its navigation method
+    if (widget.hideBottomBar) {
+      // We're inside the MainNavigationScreen, so use its navigation method
+      MainNavigationScreen.navigateToTracking(context, trackingNumber);
+    } else {
+      // We're not inside the MainNavigationScreen, so navigate directly
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TrackingScreen(trackingNumber: trackingNumber),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -258,56 +304,56 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        scrolledUnderElevation: 0, // No elevation when scrolled under
-        title: Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: Image.asset(
-            'assets/images/logo-main.png',
-            height: 40,
-            fit: BoxFit.contain,
+    final content = Scaffold(
+        appBar: AppBar(
+          scrolledUnderElevation: 0, // No elevation when scrolled under
+          title: Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Image.asset(
+              'assets/images/logo-main.png',
+              height: 40,
+              fit: BoxFit.contain,
+            ),
           ),
+          actions: [
+            // QR Code Scanner button with tooltip
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: IconButton(
+                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: () {},
+                tooltip: 'Scan QR Code',
+                style: IconButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            // Settings button with tooltip
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {},
+                tooltip: 'Settings',
+                style: IconButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          // QR Code Scanner button with tooltip
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: const Icon(Icons.qr_code_scanner),
-              onPressed: () {},
-              tooltip: 'Scan QR Code',
-              style: IconButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.primary,
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          // Settings button with tooltip
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {},
-              tooltip: 'Settings',
-              style: IconButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.primary,
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // Modern Tracking Section
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -799,11 +845,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ],
         ),
       ),
-      // Custom Logistics Bottom Navigation Bar with FAB
-      bottomNavigationBar: LogisticsBottomNavigationBar(
+    );
+
+    // Return either just the content or wrapped with AnimatedLogisticsBottomBar
+    if (widget.hideBottomBar) {
+      return content;
+    } else {
+      return AnimatedLogisticsBottomBar(
         currentIndex: 0,
         onTap: (index) {
           if (index == 2) {
+            // Navigate to the tracking screen
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -812,52 +864,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             );
           }
         },
-      ),
-    );
-  }
-
-
-
-  // Method to handle package tracking with Material 3 styling
-  void _trackPackage() {
-    final trackingNumber = _trackingNumberController.text.trim();
-    if (trackingNumber.isEmpty) {
-      // Show a Material 3 styled snackbar if no tracking number is entered
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter a tracking number'),
-          backgroundColor: Theme.of(context).colorScheme.errorContainer,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 2),
-          showCloseIcon: true,
-          closeIconColor: Theme.of(context).colorScheme.onErrorContainer,
-          action: SnackBarAction(
-            label: 'OK',
-            textColor: Theme.of(context).colorScheme.primary,
-            onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            },
-          ),
-        ),
+        onCreatePressed: () {
+          // Show a snackbar to indicate the action
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Creating new shipment'),
+              duration: const Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        },
+        child: content,
       );
-      return;
     }
-
-    // Navigate to tracking screen with the tracking number
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TrackingScreen(trackingNumber: trackingNumber),
-      ),
-    );
   }
 
   // Removed _buildDynamicBannerItem method as we're now using the optimized carousel
 
   // Removed _buildBannerItem method as we're now using the optimized carousel
-
-
 
 }
