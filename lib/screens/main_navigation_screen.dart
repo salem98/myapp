@@ -36,12 +36,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   // Method to navigate to tracking screen with a tracking number
   void navigateToTrackingWithNumber(String trackingNumber) {
+    print("MainNavigationScreen: Navigating to tracking with number: $trackingNumber");
+    
     setState(() {
       _trackingNumber = trackingNumber;
       _currentIndex = 2; // Switch to tracking tab
 
       // Update the tracking screen with the new tracking number
       _screens[2] = TrackingScreen(trackingNumber: trackingNumber);
+      
+      print("MainNavigationScreen: Updated tracking screen with number: $trackingNumber");
     });
   }
 

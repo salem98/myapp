@@ -37,10 +37,23 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
   }
 
   Future<void> _trackShipment() async {
+    print("Track button pressed - starting tracking process");
+    
+    // Check if form is valid
+    if (_formKey.currentState == null) {
+      print("Error: Form key current state is null");
+      setState(() {
+        _errorMessage = 'Form validation error. Please try again.';
+      });
+      return;
+    }
+    
     if (!_formKey.currentState!.validate()) {
+      print("Form validation failed");
       return;
     }
 
+    print("Form validation passed, proceeding with tracking");
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -50,7 +63,10 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
 
     try {
       final trackingNumber = _trackingController.text.trim();
+      print("Searching for tracking number: $trackingNumber");
+      
       final shipment = await _trackingService.getShipmentByTrackingNumber(trackingNumber);
+      print("Tracking service response: ${shipment != null ? 'Shipment found' : 'Shipment not found'}");
 
       if (shipment == null) {
         setState(() {
@@ -61,13 +77,16 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
       }
 
       final statusHistory = await _trackingService.getShipmentStatusHistory(shipment.id);
+      print("Status history fetched: ${statusHistory.length} entries");
 
       setState(() {
         _shipment = shipment;
         _statusHistory = statusHistory;
         _isLoading = false;
       });
+      print("Tracking completed successfully");
     } catch (e) {
+      print("Error during tracking: $e");
       setState(() {
         _errorMessage = 'An error occurred while tracking the shipment. Please try again.';
         _isLoading = false;
@@ -286,7 +305,10 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                             ],
                           ),
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _trackShipment,
+                            onPressed: _isLoading ? null : () {
+                              print("Track button widget clicked");
+                              _trackShipment();
+                            },
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               backgroundColor: Colors.transparent,
@@ -340,7 +362,7 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
             ),
 
             // Error Message
-            if (_errorMessage != null && _shipment == null) ...[
+            if (_errorMessage != null && _shipment == null) {
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -575,51 +597,72 @@ class _SimpleTrackingScreenState extends State<SimpleTrackingScreen> {
                   ],
                 ),
                 
-                const SizedBox(height: 16),
-                
-                // Receiver information
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.purple.shade700,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Receiver',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          Text(
-                            _shipment!.toAddress?.name ?? 'N/A',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
               ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Receiver information
+            Container(
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 15,
+                    offset: const Offset(8, 8),
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.9),
+                    blurRadius: 15,
+                    offset: const Offset(-8, -8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.purple.shade700,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Receiver',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Text(
+                          _shipment!.toAddress?.name ?? 'N/A',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-              // Tracking History
-              if (_statusHistory.isNotEmpty) ...[
+            // Tracking History
+            if (_statusHistory.isNotEmpty) {
                 const SizedBox(height: 24),
                 Container(
                   decoration: BoxDecoration(

@@ -216,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // Text controller for tracking number input
   final TextEditingController _trackingNumberController = TextEditingController();
 
-  // Method to handle package tracking with Material 3 styling
+// Method to handle package tracking with Material 3 styling
   void _trackPackage() {
     final trackingNumber = _trackingNumberController.text.trim();
     if (trackingNumber.isEmpty) {
@@ -243,19 +243,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return;
     }
 
-    // If we're inside the MainNavigationScreen, use its navigation method
-    if (widget.hideBottomBar) {
-      // We're inside the MainNavigationScreen, so use its navigation method
-      MainNavigationScreen.navigateToTracking(context, trackingNumber);
-    } else {
-      // We're not inside the MainNavigationScreen, so navigate directly
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => TrackingScreen(trackingNumber: trackingNumber),
-        ),
-      );
-    }
+    // Debug message to verify the tracking number
+    print("HomeScreen: Tracking package with number: $trackingNumber");
+    
+    // Show a snackbar to indicate we're processing
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Tracking package: $trackingNumber'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+
+    // DIRECT NAVIGATION - Always navigate directly to the tracking screen
+    print("HomeScreen: Navigating directly to TrackingScreen");
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TrackingScreen(trackingNumber: trackingNumber),
+      ),
+    );
   }
 
   @override

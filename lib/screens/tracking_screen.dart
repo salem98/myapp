@@ -50,12 +50,12 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
     // If a tracking number was provided, set it in the controller and track it
     if (widget.trackingNumber != null && widget.trackingNumber!.isNotEmpty) {
       _trackingController.text = widget.trackingNumber!;
+      
+      print("TrackingScreen: Received tracking number: ${widget.trackingNumber}");
 
-      // Use Future.delayed to ensure the widget is fully built before tracking
-      // This prevents issues with the form validation
-      Future.delayed(Duration.zero, () {
-        _trackShipment();
-      });
+      // IMPORTANT: Track immediately without delay
+      print("TrackingScreen: Calling _trackShipment() immediately");
+      _trackShipment();
     }
   }
 
@@ -467,6 +467,22 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
                     Icon(Icons.inventory_2_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text('Package: ${_shipment!.weight ?? 'N/A'} kgs, ${_shipment!.quantity ?? 0} boxes'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.flight_takeoff_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Origin: ${_shipment!.origin ?? 'N/A'}'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.flight_land_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Destination: ${_shipment!.destination ?? 'N/A'}'),
                   ],
                 ),
                 const SizedBox(height: 16),

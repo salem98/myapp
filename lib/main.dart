@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/main_navigation_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/debug_tracking_screen.dart'; // Import the debug tracking screen
 import 'theme/app_theme.dart';
 
 // test note 123
@@ -28,7 +29,10 @@ class TNSApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system, // Respect system theme settings
-      home: const OnboardingScreen(),
+      // Switch back to the normal app flow
+      home: const MainNavigationScreen(),
+      // For debugging tracking issues:
+      // home: const DebugTrackingScreen(),
     );
   }
 }
