@@ -7,6 +7,7 @@ import 'package:myapp/widgets/optimized_carousel.dart';
 import 'package:myapp/widgets/quick_actions_section.dart';
 import 'dart:async';
 import 'package:myapp/services/notification_service.dart';
+import 'package:myapp/screens/cost_estimate_screen.dart';
 
 // Custom painter for drawing dashed line
 class DashedLinePainter extends CustomPainter {
@@ -666,6 +667,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     setState(() {
                                       _selectedShippingOption = 0;
                                     });
+                                    
+                                    // Navigate to cost estimate screen
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CostEstimateScreen(
+                                          shippingOption: 0,
+                                        ),
+                                      ),
+                                    );
                                   },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
@@ -692,7 +703,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                isSmallScreen ? 'AIR' : 'Singapore, Malaysia, Dubai',
+                                                isSmallScreen ? 'AIR' : 'SHIP QUỐC TẾ - INTERNATIONAL',
                                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: isSmallScreen ? 14 : 16,
@@ -739,6 +750,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     setState(() {
                                       _selectedShippingOption = 1;
                                     });
+                                    
+                                    // Navigate to cost estimate screen
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CostEstimateScreen(
+                                          shippingOption: 1,
+                                        ),
+                                      ),
+                                    );
                                   },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
@@ -765,7 +786,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                'International',
+                                                'Mua hộ Shopee/Lazada',
                                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: isSmallScreen ? 14 : 16,
@@ -775,7 +796,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                'Shipping to over 200+ countries worldwide',
+                                                'Mua hộ 2 chiều các nước',
                                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                   fontSize: isSmallScreen ? 11 : 12,
                                                 ),

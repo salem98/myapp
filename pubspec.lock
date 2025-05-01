@@ -121,6 +121,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.0"
+  country_picker:
+    dependency: "direct main"
+    description:
+      name: country_picker
+      sha256: "9b14c04f9a35e99f6de6bcbc453a556bb98345aecb481c7a0e843c94c2bee1f8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.27"
   crypto:
     dependency: transitive
     description:
@@ -190,6 +198,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.1"
+  flutter_form_builder:
+    dependency: "direct main"
+    description:
+      name: flutter_form_builder
+      sha256: c278ef69b08957d484f83413f0e77b656a39b7a7bb4eb8a295da3a820ecc6545
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.5.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -693,6 +709,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  universal_io:
+    dependency: transitive
+    description:
+      name: universal_io
+      sha256: "1722b2dcc462b4b2f3ee7d188dad008b6eb4c40bbd03a3de451d82c78bba9aad"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.2"
   url_launcher:
     dependency: transitive
     description:
