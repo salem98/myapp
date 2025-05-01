@@ -18,21 +18,81 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="TNS Express - Shipment Tracking Application">
 
-  <!-- iOS meta tags & icons -->
+  <!-- PWA meta tags -->
+  <meta name="theme-color" content="#0175C2">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="TNS Express">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
+  
+  <!-- Add apple splash screens for better iOS PWA experience -->
+  <link rel="apple-touch-startup-image" href="icons/Icon-512.png">
+  
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>TNS Express</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- Service worker registration script -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        // Register both the Flutter-generated service worker and our custom one
+        navigator.serviceWorker.register('flutter_service_worker.js')
+          .then(() => {
+            console.log('Flutter service worker registered');
+            // After Flutter's service worker is registered, register our custom one
+            return navigator.serviceWorker.register('custom_service_worker.js', {
+              scope: '/'
+            });
+          })
+          .then((registration) => {
+            console.log('Custom service worker registered with scope:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('Service worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+  
+  <!-- Network status checker -->
+  <script src="network_status.js" defer></script>
 </head>
 <body>
+  <!-- Loading indicator (optional) -->
+  <div id="loading">
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(1, 117, 194, 0.3);
+        border-radius: 50%;
+        border-top-color: #0175C2;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    <div class="spinner"></div>
+  </div>
+  
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

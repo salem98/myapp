@@ -6,6 +6,7 @@ import 'package:myapp/widgets/animated_logistics_bottom_bar.dart';
 import 'package:myapp/widgets/optimized_carousel.dart';
 import 'package:myapp/widgets/quick_actions_section.dart';
 import 'dart:async';
+import 'package:myapp/services/notification_service.dart';
 
 // Custom painter for drawing dashed line
 class DashedLinePainter extends CustomPainter {
@@ -215,8 +216,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   // Text controller for tracking number input
   final TextEditingController _trackingNumberController = TextEditingController();
+  // Notification service instance
+  final _notificationService = NotificationService();
 
-// Method to handle package tracking with Material 3 styling
+  // List of notifications for marquee and current index
+  List<Map<String, dynamic>> _marqueeNotifications = [];
+  int _currentMarqueeIndex = 0;
+  Timer? _marqueeTextTimer;
+  
+  // Scroll controller to track scroll position for logo animation
+  final ScrollController _scrollController = ScrollController();
+  
+  // Logo size that will be animated based on scroll position
+  double _logoSize = 42;
+  double _maxLogoSize = 42;
+  double _minLogoSize = 28;
+
+  // Method to handle package tracking with Material 3 styling
   void _trackPackage() {
     final trackingNumber = _trackingNumberController.text.trim();
     if (trackingNumber.isEmpty) {
@@ -273,6 +289,41 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Future.delayed(const Duration(milliseconds: 500), () {
       _startBannerAutoScroll();
     });
+
+    // load existing notifications for marquee
+    _notificationService.getAllNotifications().then((data) {
+      setState(() {
+        _marqueeNotifications = data;
+      });
+      if (_marqueeNotifications.length > 1) {
+        _marqueeTextTimer = Timer.periodic(
+          const Duration(seconds: 8),
+          (_) {
+            setState(() {
+              _currentMarqueeIndex =
+                  (_currentMarqueeIndex + 1) % _marqueeNotifications.length;
+            });
+          },
+        );
+      }
+    });
+    
+    // Add listener to scroll controller for logo animation
+    _scrollController.addListener(_updateLogoSize);
+  }
+  
+  // Update logo size based on scroll position
+  void _updateLogoSize() {
+    final scrollOffset = _scrollController.offset;
+    // Calculate new logo size based on scroll position with improved animation curve
+    // The logo will shrink as the user scrolls down, with a more natural feel
+    final newSize = (_maxLogoSize - (scrollOffset * 0.08)).clamp(_minLogoSize, _maxLogoSize);
+    
+    if (newSize != _logoSize) {
+      setState(() {
+        _logoSize = newSize;
+      });
+    }
   }
 
   // Auto-scroll function for the banner
@@ -304,7 +355,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _tabController.dispose();
     _bannerController.dispose();
     _trackingNumberController.dispose();
+    _scrollController.removeListener(_updateLogoSize);
+    _scrollController.dispose();
     _autoScrollTimer?.cancel();
+    _marqueeTextTimer?.cancel();
     super.dispose();
   }
 
@@ -312,86 +366,80 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final content = Scaffold(
         appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           scrolledUnderElevation: 0, // No elevation when scrolled under
-          title: Padding(
-            padding: const EdgeInsets.only(right: 16.0),
+          elevation: 0,
+          toolbarHeight: 60,
+          centerTitle: true,
+          title: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            height: _logoSize,
             child: Image.asset(
               'assets/images/logo-main.png',
-              height: 40,
               fit: BoxFit.contain,
             ),
           ),
+          // Simplified actions - only essential icons
           actions: [
-            // QR Code Scanner button with tooltip
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: IconButton(
-                icon: const Icon(Icons.qr_code_scanner),
-                onPressed: () {},
-                tooltip: 'Scan QR Code',
-                style: IconButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            // Settings button with tooltip
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {},
-                tooltip: 'Settings',
-                style: IconButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
+            IconButton(
+              icon: const Icon(Icons.qr_code_scanner, size: 22),
+              onPressed: () {},
+              tooltip: 'Scan QR Code',
             ),
           ],
+          // Add a subtle bottom border for visual separation
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              height: 1,
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+          ),
         ),
         body: SingleChildScrollView(
+          controller: _scrollController, // Add scroll controller
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            // Modern Tracking Section
+            // Modern Tracking Section with Grab-inspired design
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isSmallScreen = constraints.maxWidth < 400;
 
                   return Column(
                     children: [
-                      // Simple News ticker
+                      // Simple News ticker with cleaner design
                       Container(
-                        height: 28,
+                        height: 32,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor.withOpacity(0.1),
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              Icons.campaign_rounded,
+                              Icons.info_outline,
                               size: 14,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: MarqueeWidget(
-                                text: "Đây là thông báo thử nghiệm - Chúng tôi đang nâng cấp hệ thống - Xin cảm ơn quý khách",
+                                text: _marqueeNotifications.isNotEmpty
+                                    ? _marqueeNotifications[_currentMarqueeIndex]['message'] as String
+                                    : 'Đang chờ thông báo',
                                 textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: isSmallScreen ? 11 : 12,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: isSmallScreen ? 12 : 13,
                                 ),
                               ),
                             ),
@@ -401,88 +449,69 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                       const SizedBox(height: 16),
 
-                      // Clean Minimal Tracking Bar
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                      // Clean Minimal Tracking Bar inspired by Grab
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: TextField(
                           controller: _trackingNumberController,
                           decoration: InputDecoration(
                             hintText: 'Enter tracking number',
                             hintStyle: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
-                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
                             ),
                             filled: true,
                             fillColor: Theme.of(context).colorScheme.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                                width: 1,
-                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                                 width: 1,
                               ),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                                width: 1.5,
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(left: 12, right: 8),
+                              child: Icon(
+                                Icons.search,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // QR Code button
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.qr_code_scanner,
-                                    color: Theme.of(context).colorScheme.primary,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Scan QR Code'),
-                                        duration: Duration(seconds: 1),
-                                      ),
-                                    );
-                                  },
-                                  padding: EdgeInsets.zero,
-                                  visualDensity: VisualDensity.compact,
+                            suffixIcon: Container(
+                              margin: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.arrow_forward,
+                                  size: 18,
+                                  color: Colors.white,
                                 ),
-
-                                // Track button
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: InkWell(
-                                    onTap: _trackPackage,
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        'Track',
-                                        style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onPrimary,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                onPressed: _trackPackage,
+                                tooltip: 'Track Package',
+                                padding: EdgeInsets.zero,
+                              ),
                             ),
                           ),
                           onSubmitted: (value) {
@@ -490,8 +519,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           },
                         ),
                       ),
-
-
                     ],
                   );
                 },
