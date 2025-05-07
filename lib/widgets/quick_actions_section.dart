@@ -3,6 +3,8 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:myapp/widgets/modern_quick_action.dart';
 import 'package:myapp/screens/tracking_screen.dart';
+import 'package:myapp/screens/restricted_inquiry_screen.dart';
+import 'package:myapp/screens/freight_calculator_screen_new.dart';
 
 class QuickActionsSection extends StatelessWidget {
   const QuickActionsSection({super.key});
@@ -102,12 +104,20 @@ class QuickActionsSection extends StatelessWidget {
                 },
                 {
                   'icon': Icons.access_time,
-                  'label': 'Delivery Time',
+                  'label': 'Consolidation Order',
                   'color': Colors.purple,
                 },
                 {
                   'icon': Icons.rule,
-                  'label': useShortLabels ? 'Standards' : 'Shipping Standards',
+                  'label': useShortLabels ? 'Restricted' : 'Restricted Inquiry',
+                  'onTap': () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RestrictedInquiryScreen(),
+                      ),
+                    );
+                  },
                   'color': Colors.teal,
                 },
                 {
@@ -117,7 +127,15 @@ class QuickActionsSection extends StatelessWidget {
                 },
                 {
                   'icon': Icons.straighten,
-                  'label': useShortLabels ? 'Measurements' : 'Measurement Rules',
+                  'label': useShortLabels ? 'Calculator' : 'Freight Calculator',
+                  'onTap': () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FreightCalculatorScreen(),
+                      ),
+                    );
+                  },
                   'color': Colors.red,
                 },
                 {

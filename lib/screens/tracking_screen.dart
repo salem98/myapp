@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myapp/models.dart';
 import 'package:myapp/services/tracking_service.dart';
+import 'package:myapp/services/tracking_history_service.dart';
+import 'package:myapp/widgets/tracking_history_section.dart';
+import 'package:myapp/widgets/status_timeline.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TrackingScreen extends StatefulWidget {
@@ -18,6 +21,8 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
   final _formKey = GlobalKey<FormState>();
 
   Shipment? _shipment;
+  List<Map<String, dynamic>> _trackingHistory = [];
+  bool _isLoadingHistory = false;
   List<Map<String, dynamic>> _statusHistory = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -27,12 +32,17 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
   late Animation<double> _formOpacityAnimation;
   
   late final TrackingService _trackingService;
+  late final TrackingHistoryService _historyService;
 
   @override
   void initState() {
     super.initState();
     final supabaseClient = Supabase.instance.client;
     _trackingService = TrackingService(supabaseClient);
+    _historyService = TrackingHistoryService();
+    
+    // Load tracking history
+    _loadTrackingHistory();
     
     // Initialize animation controller
     _animationController = AnimationController(
@@ -58,6 +68,20 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
       _trackShipment();
     }
   }
+  
+  // Load tracking history from shared preferences
+  Future<void> _loadTrackingHistory() async {
+    setState(() {
+      _isLoadingHistory = true;
+    });
+    
+    final history = await _historyService.getTrackingHistory();
+    
+    setState(() {
+      _trackingHistory = history;
+      _isLoadingHistory = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -66,9 +90,13 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
     super.dispose();
   }
 
-  Future<void> _trackShipment() async {
+  Future<void> _trackShipment({String? trackingNumber}) async {
+    // Use provided tracking number or get from text field
+    final trackingToUse = trackingNumber ?? _trackingController.text.trim();
+    
     // Skip validation if the form is not yet built (when called from initState)
-    if (_formKey.currentState != null && !_formKey.currentState!.validate()) {
+    // or if a tracking number was provided directly
+    if (trackingNumber == null && _formKey.currentState != null && !_formKey.currentState!.validate()) {
       return;
     }
 
@@ -78,8 +106,8 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
     });
 
     try {
-      final trackingNumber = _trackingController.text.trim();
-      final shipment = await _trackingService.getShipmentByTrackingNumber(trackingNumber);
+      print("Tracking number: $trackingToUse");
+      final shipment = await _trackingService.getShipmentByTrackingNumber(trackingToUse);
 
       if (shipment == null) {
         setState(() {
@@ -90,6 +118,12 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
       }
 
       final statusHistory = await _trackingService.getShipmentStatusHistory(shipment.id);
+      
+      // Save to tracking history
+      await _historyService.saveToHistory(shipment);
+      
+      // Reload tracking history
+      await _loadTrackingHistory();
 
       setState(() {
         _shipment = shipment;
@@ -189,7 +223,24 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
               opacity: _formOpacityAnimation,
               child: AnimatedSizeAndFade(
                 show: _shipment == null,
-                child: _buildTrackingForm(theme),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Tracking input form
+                    _buildTrackingForm(theme),
+                    
+                    // Recent Tracking History
+                    TrackingHistorySection(
+                      trackingHistory: _trackingHistory,
+                      isLoading: _isLoadingHistory,
+                      onTrackAgain: (trackingNumber) => _trackShipment(trackingNumber: trackingNumber),
+                      onClearHistory: () {
+                        _historyService.clearTrackingHistory();
+                        _loadTrackingHistory();
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
             
@@ -200,34 +251,8 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
             const SizedBox(height: 16),
             
             // Error Message Section
-            if (_errorMessage != null) 
-              Card(
-                elevation: 0,
-                color: theme.colorScheme.errorContainer,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: theme.colorScheme.error,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onErrorContainer,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            if (_errorMessage != null && _shipment == null)
+              _buildErrorCard(theme),
           ],
         ),
       ),
@@ -501,20 +526,43 @@ class _TrackingScreenState extends State<TrackingScreen> with SingleTickerProvid
                     ),
                   )
                 else
-                  ..._statusHistory.map((status) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                      child: Text(
-                        '${status['date']}: ${status['status']}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    );
-                  }).toList(),
+                  StatusTimeline(statusHistory: _statusHistory),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+  
+  // Widget for the error message
+  Widget _buildErrorCard(ThemeData theme) {
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.errorContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              color: theme.colorScheme.error,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _errorMessage!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
   
