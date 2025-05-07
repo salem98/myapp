@@ -1,6 +1,6 @@
 // Custom Service Worker for TNS Express PWA
 
-const CACHE_NAME = 'tns-express-cache-v1';
+const CACHE_NAME = 'tns-express-cache-v1.0.4';
 const RESOURCES = [
   '/',
   '/index.html',
