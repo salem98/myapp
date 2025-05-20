@@ -3,6 +3,8 @@ import 'package:myapp/screens/home_screen.dart';
 import 'package:myapp/screens/history_screen.dart';
 import 'package:myapp/screens/tracking_screen.dart';
 import 'package:myapp/screens/account_screen.dart';
+import 'package:myapp/screens/login_screen.dart';
+import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/widgets/animated_logistics_bottom_bar.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -23,8 +25,25 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  final _authService = AuthService();
   int _currentIndex = 0;
   String? _trackingNumber;
+  bool _isAuthenticated = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Check initial auth state
+    _isAuthenticated = _authService.isAuthenticated;
+    
+    // Listen to auth state changes
+    _authService.authStateStream.listen((state) {
+      setState(() {
+        _isAuthenticated = state.isAuthenticated;
+      });
+    });
+  }
 
   // Make screens late initialized so we can update them with tracking numbers
   late final List<Widget> _screens = [
@@ -48,15 +67,39 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       print("MainNavigationScreen: Updated tracking screen with number: $trackingNumber");
     });
   }
+  
+  // Check if the user is authenticated for protected screens
+  bool _checkAuthForProtectedScreen(int index) {
+    // History screen is at index 1, Account screen is at index 3
+    if ((index == 1 || index == 3) && !_isAuthenticated) {
+      return false;
+    }
+    return true;
+  }
+  
+  // Navigate to login screen
+  void _navigateToLogin() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedLogisticsBottomBar(
       currentIndex: _currentIndex,
       onTap: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
+        // Check authentication for protected screens
+        if (_checkAuthForProtectedScreen(index)) {
+          setState(() {
+            _currentIndex = index;
+          });
+        } else {
+          // Navigate to login screen for protected screens
+          _navigateToLogin();
+        }
       },
       onCreatePressed: () {
         // Show shipment options modal

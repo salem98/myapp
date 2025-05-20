@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/main_navigation_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/debug_tracking_screen.dart'; // Import the debug tracking screen
 import 'theme/app_theme.dart';
+import 'services/auth_service.dart';
 
-// test note 123
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
@@ -18,9 +19,31 @@ Future<void> main() async {
   runApp(const TNSApp());
 }
 
-class TNSApp extends StatelessWidget {
+class TNSApp extends StatefulWidget {
   const TNSApp({super.key});
 
+  @override
+  State<TNSApp> createState() => _TNSAppState();
+}
+
+class _TNSAppState extends State<TNSApp> {
+  final _authService = AuthService();
+  bool _isAuthenticated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Check initial auth state
+    _isAuthenticated = _authService.isAuthenticated;
+    
+    // Listen to auth state changes
+    _authService.authStateStream.listen((state) {
+      setState(() {
+        _isAuthenticated = state.isAuthenticated;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +52,10 @@ class TNSApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system, // Respect system theme settings
-      // Switch back to the normal app flow
-      home: const MainNavigationScreen(),
+      home: const MainNavigationScreen(), // Always show MainNavigationScreen
       // For debugging tracking issues:
       // home: const DebugTrackingScreen(),
     );
   }
 }
-
 
