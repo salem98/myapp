@@ -39,42 +39,8 @@
   
   <!-- Service worker registration script -->
   <script>
-    const CURRENT_VERSION = '1.0.4';
-
-    async function clearCaches() {
-      const cacheNames = await caches.keys();
-      await Promise.all(
-        cacheNames.map((cacheName) => caches.delete(cacheName))
-      );
-      console.log('All caches cleared');
-    }
-
-    async function unregisterServiceWorkers() {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(
-        registrations.map((registration) => registration.unregister())
-      );
-      console.log('All service workers unregistered');
-    }
-
-    async function checkVersionAndResetCache() {
-      const storedVersion = localStorage.getItem('app_version');
-      if (storedVersion !== CURRENT_VERSION) {
-        console.log(`Version mismatch: stored=${storedVersion}, current=${CURRENT_VERSION}`);
-        await unregisterServiceWorkers();
-        await clearCaches();
-        localStorage.setItem('app_version', CURRENT_VERSION);
-        // Reload the page to fetch fresh resources
-        window.location.reload(true);
-      } else {
-        console.log('App version matches stored version:', CURRENT_VERSION);
-      }
-    }
-
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async function () {
-        await checkVersionAndResetCache();
-
+      window.addEventListener('load', function () {
         // Register both the Flutter-generated service worker and our custom one
         navigator.serviceWorker.register('flutter_service_worker.js')
           .then(() => {

@@ -1,6 +1,7 @@
 // Custom Service Worker for TNS Express PWA
 
-const CACHE_NAME = 'tns-express-cache-v1.0.4';
+const APP_VERSION = '1.0.4';
+const CACHE_NAME = `tns-express-cache-${APP_VERSION}`;
 const RESOURCES = [
   '/',
   '/index.html',
@@ -20,6 +21,7 @@ const OFFLINE_PAGE = '/offline.html';
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
+  console.log('Service worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -33,20 +35,21 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service worker activating...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    (async () => {
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        if (cacheName !== CACHE_NAME) {
+          console.log('Deleting old cache:', cacheName);
+          await caches.delete(cacheName);
+        }
+      }
+      // Claim clients so the service worker is in control immediately
+      await self.clients.claim();
+      console.log('Service worker activated and clients claimed.');
+    })()
   );
-  // Claim clients so the service worker is in control immediately
-  self.clients.claim();
 });
 
 // Fetch event - serve from cache, fall back to network
@@ -88,8 +91,10 @@ self.addEventListener('fetch', (event) => {
 
 // Handle push notifications (if implemented)
 self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
   if (event.data) {
     const data = event.data.json();
+    console.log('Push data:', data);
     
     const options = {
       body: data.body || 'New update from TNS Express',
@@ -109,6 +114,7 @@ self.addEventListener('push', (event) => {
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
+  console.log('Notification click event:', event);
   event.notification.close();
   
   event.waitUntil(
